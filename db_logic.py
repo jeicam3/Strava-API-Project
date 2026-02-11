@@ -20,7 +20,8 @@ def insert_activity_data(activities, laps_array):
                     time_int=activity['time_int'],
                     type=activity['type'],
                     date=activity['date'],
-                    pace = activity['pace']
+                    pace = activity['pace'],
+                    training_load = activity['training_load']
                 )
                 session.add(new_activity)
 
@@ -32,7 +33,8 @@ def insert_activity_data(activities, laps_array):
                         time = lap['time'],
                         time_int = lap['time_int'],
                         lap_idx = i,
-                        pace = lap['pace']
+                        pace = lap['pace'],
+                        avg_hr = lap['avg_hr']
                     )
                     new_activity.laps.append(new_lap)
 

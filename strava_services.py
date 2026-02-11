@@ -98,12 +98,34 @@ def get_activities(start_date, end_date):
             activity_id = activity['id']
             laps_url = f"https://www.strava.com/api/v3/activities/{activity_id}/laps"
             laps_response = requests.get(laps_url, params=params, headers=headers)
+            streams = get_streams(activity_id, access_token)
             if laps_response.status_code == 200:
                 laps = laps_response.json()
-                laps_array.append(process_laps_data(laps))
+                laps_array.append(process_laps_data(laps, streams))
             else:
                 return None
-            activities_array.append(process_activity_data(activity))
+            activities_array.append(process_activity_data(activity, streams))
         return activities_array, laps_array
     else:
         return None
+    
+def get_streams(activity_id, access_token):
+    url = f"https://www.strava.com/api/v3/activities/{activity_id}/streams"
+    headers = {'Authorization': f'Bearer {access_token}'}
+    params = {'keys': 'heartrate,time,distance', 'key_by_type': 'true'}
+
+    response = requests.get(url, headers=headers, params=params)
+
+    if response.status_code != 200:
+        print(f"Błąd pobierania streams: {response.status_code} - {response.text}")
+        return {'hr_data': [], 'time_data': [], 'dist_data': []}
+    data = response.json()
+
+    # Używamy .get(), aby uniknąć błędu, jeśli tętno nie było rejestrowane
+    streams = {
+        'hr_data': data.get('heartrate', {}).get('data', []),
+        'time_data': data.get('time', {}).get('data', []),
+        'dist_data': data.get('distance', {}).get('data', [])
+    }
+    
+    return streams

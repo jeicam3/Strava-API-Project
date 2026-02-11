@@ -1,7 +1,11 @@
 from datetime import datetime
+import math
+import pandas as pd
 
-def process_laps_data(laps):
+def process_laps_data(laps, streams):
     result = []
+    lap_begin_distance = 0
+    lap_end_distance = 0
     for lap in laps:
         lap_id = lap['id']
         name = lap['name']
@@ -9,6 +13,9 @@ def process_laps_data(laps):
         time = time_toString(time_int)
         pace = calculate_pace(lap['moving_time'], lap['distance'])
         distance = lap['distance']
+        lap_end_distance += distance
+        avg_hr = calculate_lap_avg_hr(streams, lap_begin_distance, lap_end_distance)
+        lap_begin_distance += distance
 
         result_element= {
             'lap_id': lap_id,
@@ -16,12 +23,13 @@ def process_laps_data(laps):
             'time_int': time_int,
             'time': time,
             'distance': distance,
-            'pace': pace
+            'pace': pace,
+            'avg_hr': avg_hr
         }
         result.append(result_element)
     return result
 
-def process_activity_data(activity):
+def process_activity_data(activity, streams):
     activity_id = activity['id']
     name = activity['name']
     time_int = activity['moving_time']
@@ -40,7 +48,8 @@ def process_activity_data(activity):
         'distance': distance,
         'pace': pace,
         'type': type,
-        'date': start_date
+        'date': start_date,
+        'training_load': calculate_TL(streams)
     }
     return result
 
@@ -59,3 +68,30 @@ def calculate_pace(time, distance):
         return f"{minutes:02d}:{seconds:02d} min/km"
     else:
         return 0
+    
+def calculate_TL(streams):
+    tl = 0
+    hr_rest = 60
+    hr_max = 205
+    for i in range(1, len(streams['hr_data'])):
+        delta_t = (streams['time_data'][i] - streams['time_data'][i-1]) / 60 #here we need delta time in minutes
+        curr_hr = streams['hr_data'][i]
+
+        hr_ratio = (curr_hr - hr_rest) / (hr_max - hr_rest)
+        if hr_ratio > 0:
+            impulse = delta_t * hr_ratio * 0.64 * math.exp(1.92 * hr_ratio)
+            tl += impulse
+    return int(tl)
+
+def calculate_lap_avg_hr(streams, begin, end):
+    df = pd.DataFrame(streams)
+    if df['hr_data'].empty:
+        return 0
+    lap_data = df[(df['dist_data'] >= begin) & (df['dist_data'] <= end)]
+    if lap_data.empty:
+        return 0 #najbliższy punkt?
+    avg = lap_data['hr_data'].mean()
+    if pd.isna(avg):
+        return 0
+    
+    return int(avg)

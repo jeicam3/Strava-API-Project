@@ -16,6 +16,7 @@ class Activity(Base):
     date = Column(DateTime)
     pace = Column(String)
     Session = Column(Boolean, default=False)
+    training_load = Column(Integer)
     laps = relationship("Lap", back_populates="activity", cascade="all, delete-orphan")
 
     def __repr__(self):
@@ -32,6 +33,7 @@ class Lap(Base):
     time = Column(String)
     time_int = Column(Integer)
     pace = Column(String)
+    avg_hr = Column(Integer)
 
     activity = relationship("Activity", back_populates="laps")
 

@@ -130,13 +130,15 @@ def get_activity_details(activity_id):
         'distance_km': 'Distance',
         'pace': 'Avg Pace',
         'time': 'Time',
-        'date': 'Date'
+        'date': 'Date',
+        'training_load': 'Training Load'
     }
     laps_summary_cols = {
         'name': 'Lap',
         'distance_km': 'Distance (km)',
         'time': 'Time',
-        'pace': 'Avg Pace'
+        'pace': 'Avg Pace',
+        'avg_hr': 'Avg HR'
     }
     act_summary = act_info[list(act_summary_cols.keys())].rename(columns=act_summary_cols).T
     laps_summary = laps_info[list(laps_summary_cols.keys())].rename(columns=laps_summary_cols)
