@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Manual Upload{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <h2 class="mb-4 text-center">Upload data from Strava</h2>
+        <div class="card p-4 border-0 shadow-sm bg-light">
+            <form action="/upload_activities" method="get" id="syncForm">
+                <div class="mb-3">
+                    <label for="start_date" class="form-label fw-bold">After:</label>
+                    <input type="date" class="form-control" id="start_date" name="start_date" required>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="end_date" class="form-label fw-bold">Before:</label>
+                    <input type="date" class="form-control" id="end_date" name="end_date" required>
+                    <div id="dateError" class="text-danger small mt-1" style="display: none;">Invalid date range</div>
+                </div>
+                
+                <div class="d-grid gap-2 mt-4">
+                    <button type="submit" id="submitBtn" class="btn btn-primary">
+                        <span id="btnText">Upload</span>
+                        <span id="btnSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                    </button>
+                    <a href="/calendar" id="cancelBtn" class="btn btn-outline-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    const form = document.getElementById('syncForm');
+    const startDateInput = document.getElementById('start_date');
+    const endDateInput = document.getElementById('end_date');
+    const dateError = document.getElementById('dateError');
+    const submitBtn = document.getElementById('submitBtn');
+    const btnText = document.getElementById('btnText');
+    const btnSpinner = document.getElementById('btnSpinner');
+    const cancelBtn = document.getElementById('cancelBtn');
+
+    if(endDateInput) endDateInput.valueAsDate = new Date();
+
+    function validateDates() {
+        if (!startDateInput || !endDateInput || !dateError) return;
+
+        const start = new Date(startDateInput.value);
+        const end = new Date(endDateInput.value);
+
+        if (startDateInput.value && endDateInput.value && end < start) {
+            dateError.style.display = 'block';
+            endDateInput.classList.add('is-invalid');
+            submitBtn.disabled = true;
+        } else {
+            dateError.style.display = 'none';
+            endDateInput.classList.remove('is-invalid');
+            submitBtn.disabled = false;
+        }
+    }
+
+    startDateInput.addEventListener('change', validateDates);
+    endDateInput.addEventListener('change', validateDates);
+
+    form.addEventListener('submit', function() {
+        submitBtn.disabled = true;
+        cancelBtn.classList.add('disabled');
+        
+        btnText.textContent = "Uploading data...";
+        btnSpinner.classList.remove('d-none');
+    });
+</script>
+{% endblock %}

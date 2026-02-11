@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}Operation status{% endblock %}
+
+{% block content %}
+    <div class="text-center">
+        <div class="alert alert-{{ status }} role="alert">
+            <h4 class="alert-heading">
+                {% if status == 'success' %} Success {% else %} An error occurred {% endif %}
+            </h4>
+            <p>{{ message }}</p>
+        </div>
+        
+        <a href="/calendar" class="btn btn-primary mt-3">Back to calendar</a>
+    </div>
+{% endblock %}

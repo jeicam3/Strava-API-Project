@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block title %}Activities Summary{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="display-6">Activities Summary</h2>
+
+    <div class="d-flex gap-2 align-items-center"> 
+        
+        <div class="dropdown my-dropdown">
+            <button class="btn btn-outline-light btn-sm dropdown-toggle" type="button">
+                Options
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow">
+                <li>
+                    <button class="dropdown-item" type="button" data-bs-toggle="modal" data-bs-target="#addBlockModal">
+                        Add Training Block
+                    </button>
+                </li>
+            </ul>
+        </div>
+
+        <a href="/upload_latest" id="updateBtn" class="btn btn-outline-light btn-sm">
+            <span id="updateText">Quick Update</span>
+            <span id="updateSpinner" class="spinner-border spinner-border-sm d-none" role="status"></span>
+        </a>
+
+    </div> 
+</div>
+
+<div class="container mt-4">
+
+    {% for block in blocks %}
+    <div class="block-section mb-5 shadow-sm p-4 bg-white rounded">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="h3 mb-0 text-primary">{{ block.name }}</h2>
+            <div class="d-flex gap-3">
+                <span class="badge bg-secondary d-inline-flex align-items-center">{{ block.period }}</span>
+                <a href="/delete_block/{{block.block_id}}" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this block?');">Delete Block</a>
+                <a href="/block_details/{{block.block_id}}/distance_km" class="btn btn-primary btn-sm">See Details</a>
+            </div>
+        </div>
+        
+        <div class="table-responsive shadow-sm border-0">
+            {{ block.html | safe }}
+        </div>
+    </div>
+    {% if not loop.last %}
+        <hr class="my-5 text-muted opacity-25">
+    {% endif %}
+    {% endfor %}
+
+    {% if not blocks %}
+        <div class="alert alert-info">No blocks defined yet.</div>
+    {% endif %}
+</div>
+
+<div class="modal fade" id="addBlockModal" tabindex="-1" aria-labelledby="addBlockModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addBlockModalLabel">Add Training Block</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="/add_block" method="post">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Block Name:</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="start" class="form-label">Start date:</label>
+                        <input type="date" class="form-control" id="start" name="start_date" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="end" class="form-label">End date:</label>
+                        <input type="date" class="form-control" id="end" name="end_date" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Save</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    h2 {
+        color: #f8f9fa;
+    }
+    .table {
+        margin-bottom: 0;
+        vertical-align: middle;
+    }
+    .table th {
+        background-color: #f8f9fa;
+        text-align: center;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        letter-spacing: 1px;
+    }
+    .table td a {
+        text-decoration: none;
+        color: #fc4c02;
+        font-weight: 600;
+        display: block;
+        padding: 2px 5px;
+        border-radius: 4px;
+        transition: background-color 0.3s;
+        margin: 5px, 5px, 5px, 10px;
+    }
+    .table td a:hover {
+        background-color: #fff2ec;
+        color: #e34402;
+    }
+    .my-dropdown:hover .dropdown-menu {
+        display: block;
+        margin-top: 0;
+    }
+    .dropdown-toggle::after {
+        vertical-align: middle;
+    }
+    .dropdown-item {
+        font-size: 0.9rem;
+        transition: background-color 0.2s;
+    }
+
+    .dropdown-item:hover {
+        background-color: #f5f6f7;
+    }
+</style>
+<script>
+    const updateBtn = document.getElementById('updateBtn');
+    const updateText = document.getElementById('updateText');
+    const updateSpinner = document.getElementById('updateSpinner');
+
+    if (updateBtn) {
+        updateBtn.addEventListener('click', function(e) {
+            if (this.classList.contains('disabled')) {
+                e.preventDefault();
+                return;
+            }
+
+            this.classList.add('disabled');
+            this.style.pointerEvents = 'none';
+
+            updateText.textContent = "Updating...";
+            updateSpinner.classList.remove('d-none');
+        });
+    }
+</script>
+{% endblock %}
