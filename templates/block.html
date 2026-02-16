@@ -29,6 +29,14 @@
                         Distance (km)
                     </button>
                 </li>
+                <li>
+                    <button class="dropdown-item" 
+                            hx-get="/get_chart/{{block.block_id}}?type=training_load" 
+                            hx-target="#chart-display"
+                            hx-swap="innerHTML">
+                        Training Load
+                    </button>
+                </li>
             </ul>
         </div>
 

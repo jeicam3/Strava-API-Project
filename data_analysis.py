@@ -1,23 +1,27 @@
 import pandas as pd
 from models import init_db
 from datetime import date, timedelta
-from db_logic import get_period_activities
+from db_logic import get_period_activities, get_user_activities, get_user_blocks
 from services import time_toString
 import plotly.express as px
 import plotly.io as pio
 
 engine = init_db()
 
-def get_activities_data():
-    df_activities = pd.read_sql_table('activities', engine)
-    return format_distance(df_activities)
+def get_activities_data(ath_id):
+    stmt = get_user_activities(ath_id)
+    
+    with engine.connect() as connection:
+        df_act = pd.read_sql(stmt, connection)
+    
+    return df_act
 
-def get_laps_data():
-    df_laps = pd.read_sql_table('laps', engine)
-    return format_distance(df_laps)
-
-def get_blocks_data():
-    df_blocks = pd.read_sql_table('blocks', engine)
+def get_blocks_data(ath_id):
+    stmt = get_user_blocks(ath_id)
+    
+    with engine.connect() as connection:
+        df_blocks = pd.read_sql(stmt, connection)
+    
     return df_blocks
 
 def get_weekly_grid(df_activities):
@@ -48,7 +52,7 @@ def get_weekly_grid(df_activities):
 
 def get_block_table(df_filtered, start_date):
     if df_filtered.empty:
-        return "<p class='text-muted'>0 activities in this block.</p>"
+        return "<p class='text-muted'>No activities in this block.</p>"
     
     df_filtered = df_filtered.sort_values(by='date', ascending=True)
     df_filtered['link'] = df_filtered.apply(
@@ -73,9 +77,9 @@ def get_block_table(df_filtered, start_date):
     
     return grid.to_html(escape=False, classes="table table-striped")
 
-def get_calendar_blocks():
-    df_activities = get_activities_data()
-    df_blocks = get_blocks_data()
+def get_calendar_blocks(ath_id):
+    df_activities = get_activities_data(ath_id)
+    df_blocks = get_blocks_data(ath_id)
 
     df_activities['date'] = pd.to_datetime(df_activities['date'])
     df_blocks['start_date'] = pd.to_datetime(df_blocks['start_date'])
@@ -189,8 +193,8 @@ def format_session_laps(laps_data):
             
     return laps_data
 
-def get_chart_data(start, end, data_type):
-    activities_query = get_period_activities(start, end)
+def get_chart_data(start, end, data_type, ath_id):
+    activities_query = get_period_activities(start, end, ath_id)
     activities = pd.read_sql(activities_query.statement, engine)
     start = pd.to_datetime(start)
     
@@ -206,14 +210,17 @@ def get_chart_data(start, end, data_type):
         weekly_data = activities.resample('W', on='date').agg(chart_data=('time_int', 'sum')).reset_index()
         weekly_data['chart_hover'] = weekly_data['chart_data'].apply(time_toString)
         weekly_data['chart_data'] = weekly_data['chart_data'] / 3600
+    elif data_type =='training_load':
+        weekly_data = activities.resample('W', on='date').agg(chart_data=('training_load', 'sum')).reset_index()
+        weekly_data['chart_hover'] = weekly_data['chart_data']
 
     weekly_data['week_num'] = ((weekly_data['date'] - start).dt.days // 7) + 1
     weekly_data['week_label'] = "Week " + weekly_data['week_num'].astype(str)
 
     return weekly_data
 
-def generate_period_chart(start, end, data_type):
-    df_weekly = get_chart_data(start, end, data_type)
+def generate_period_chart(start, end, data_type, ath_id):
+    df_weekly = get_chart_data(start, end, data_type, ath_id)
     if df_weekly.empty:
         return "<p class='text-muted text-center'>No data to display chart</p>"
     
@@ -225,6 +232,10 @@ def generate_period_chart(start, end, data_type):
         y_label = 'Distance (km)'
         chart_title = "(Distance)"
         hover_label = "Distance"
+    elif data_type == "training_load":
+        y_label = "Training Load"
+        chart_title = "(Training Load)"
+        hover_label = "Training Load"
 
     y_max = df_weekly['chart_data'].max() * 1.2
     y_min = df_weekly['chart_data'].min() * 0.8

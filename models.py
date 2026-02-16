@@ -17,7 +17,11 @@ class Activity(Base):
     pace = Column(String)
     Session = Column(Boolean, default=False)
     training_load = Column(Integer)
+
     laps = relationship("Lap", back_populates="activity", cascade="all, delete-orphan")
+
+    user_id = Column(Integer, ForeignKey('users.user_id'))
+    owner = relationship("User", back_populates="activities")
 
     def __repr__(self):
         return f"<Activity(name='{self.name}', type='{self.type}', date='{self.start_date}')>"
@@ -42,8 +46,31 @@ class Block(Base):
 
     block_id = Column(Integer, primary_key=True)
     name = Column(String, unique=True)
-    start_date = Column(Date)
-    end_date = Column(Date)
+    start_date = Column(DateTime)
+    end_date = Column(DateTime)
+
+    user_id = Column(Integer, ForeignKey('users.user_id'))
+    owner = relationship("User", back_populates="blocks")
+
+class User(Base):
+    __tablename__ = 'users'
+
+    user_id = Column(Integer, primary_key=True, index=True)
+    name = Column(String)
+    gender = Column(String)
+
+    access_token = Column(String)
+    refresh_token = Column(String)
+    expires_at = Column(Integer)
+
+    hr_max = Column(Integer, nullable=True, default=None)
+    z1_limit = Column(Integer, nullable=True, default=None)
+    z2_limit = Column(Integer, nullable=True, default=None)
+    z3_limit = Column(Integer, nullable=True, default=None)
+    z4_limit = Column(Integer, nullable=True, default=None)
+
+    activities = relationship("Activity", back_populates="owner")
+    blocks = relationship("Block", back_populates="owner")
 
 def init_db(db_url="sqlite:///strava_data.db"):
     engine = create_engine(db_url)

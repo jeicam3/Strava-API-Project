@@ -6,7 +6,7 @@ from fastapi import Form
 from fastapi import Request
 import strava_services as s
 from datetime import datetime
-from db_logic import insert_activity_data, delete, rename, change_session, get_session, add_Block, delete_block, get_block_period, get_block_object
+from db_logic import insert_activity_data, delete, rename, change_session, get_session, add_Block, delete_block, get_block_period, get_block_object, get_access_token
 from data_analysis import get_calendar_blocks, get_activity_details, quick_upload_dates, generate_period_chart
 
 templates = Jinja2Templates(directory="templates")
@@ -14,18 +14,41 @@ templates = Jinja2Templates(directory="templates")
 app = FastAPI(title="Strava Analytics App")
 
 @app.get("/")
-def home():
-    return s.authorization()
+async def root(request: Request):
+    ath_id = request.cookies.get("athlete_id")
+    if ath_id:
+        return RedirectResponse(url="/calendar", status_code=303)
+    
+    return RedirectResponse(url="/login", status_code=303)
+    #return templates.TemplateResponse("login_page.html", {"request": request})
+
+@app.get("/login")
+async def login(request: Request):
+    auth_url = s.authorization()
+    return RedirectResponse(url=auth_url)
 
 @app.get("/callback")
-def callback(code: str):
+async def callback(code: str):
     return s.callback_func(code)
 
 @app.get("/upload_activities")
 def upload_actvities(request: Request, start_date, end_date):
-    activities_data, laps_data = s.get_activities(start_date, end_date)
+    ath_id = request.cookies.get("athlete_id")
+    if not ath_id:
+        return RedirectResponse(url="/login")
+    token = get_access_token(int(ath_id))
+    result = s.get_activities(start_date, end_date, token)
+
+    if result == None:
+        return templates.TemplateResponse(
+            request=request, 
+            name="message.html", 
+            context={"status": "error", "message": "No activities were uploaded"}
+        )
+
+    activities_data, laps_data = result
     if activities_data != None:
-        result = insert_activity_data(activities_data, laps_data)
+        result = insert_activity_data(activities_data, laps_data, int(request.cookies.get("athlete_id")))
         if result['status'] == 'success':
             return templates.TemplateResponse(
             request=request, 
@@ -47,10 +70,10 @@ def upload_actvities(request: Request, start_date, end_date):
 
 @app.get("/calendar", response_class=HTMLResponse)
 def calendar(request: Request):
-    blocks_tables = get_calendar_blocks()
+    blocks_tables = get_calendar_blocks(request.cookies.get("athlete_id"))
     return templates.TemplateResponse(
         request=request, 
-        name="calendar.html", 
+        name="calendar.html",
         context={"blocks": blocks_tables}
     )
 
@@ -62,7 +85,7 @@ def get_details(request: Request, activity_id: int):
         return templates.TemplateResponse(
             request=request, 
             name="message.html", 
-            context={"status": "danger", "message": "Nie znaleziono aktywności."}
+            context={"status": "danger", "message": "Activity not found."}
         )
     return templates.TemplateResponse(
         request=request,
@@ -129,7 +152,7 @@ def add_tblock(request: Request, name: str = Form(...), start_date: str = Form(.
     try:
         start_dt = datetime.strptime(start_date, "%Y-%m-%d").date()
         end_dt = datetime.strptime(end_date, "%Y-%m-%d").date()
-        result = add_Block(name, start_dt, end_dt)
+        result = add_Block(name, start_dt, end_dt, request.cookies.get("athlete_id"))
         return RedirectResponse(url="/calendar", status_code=303)
     except Exception as e:
         return templates.TemplateResponse(
@@ -160,7 +183,7 @@ def delete_tblock(request: Request, block_id: int):
 def show_block_summary(request: Request, block_id, data_type):
     start, end = get_block_period(block_id)
     block = get_block_object(block_id)
-    chart = generate_period_chart(start, end, data_type)
+    chart = generate_period_chart(start, end, data_type, request.cookies.get("athlete_id"))
     if block != None:
         return templates.TemplateResponse(
             request=request,
@@ -175,11 +198,11 @@ def show_block_summary(request: Request, block_id, data_type):
         )
     
 @app.get('/get_chart/{block_id}', response_class=HTMLResponse)
-async def get_chart_only(block_id: int, type: str = 'distance_km'):
+async def get_chart_only(request: Request, block_id: int, type: str = 'distance_km'):
     block = get_block_object(block_id)
     
     if not block:
         return "<p>Block not found</p>"
-    chart_html = generate_period_chart(block.start_date, block.end_date, type)
+    chart_html = generate_period_chart(block.start_date, block.end_date, type, request.cookies.get("athlete_id"))
     
     return chart_html

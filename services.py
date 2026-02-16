@@ -84,14 +84,26 @@ def calculate_TL(streams):
     return int(tl)
 
 def calculate_lap_avg_hr(streams, begin, end):
-    df = pd.DataFrame(streams)
+    #df = pd.DataFrame(streams)
+
+    streams = convert_streams(streams)
+
+    data_dict = {}
+    for s in streams:
+        data_dict[s['type']] = s['data']
+
+    df = pd.DataFrame({k: pd.Series(v) for k, v in data_dict.items()})
+
     if df['hr_data'].empty:
         return 0
     lap_data = df[(df['dist_data'] >= begin) & (df['dist_data'] <= end)]
     if lap_data.empty:
-        return 0 #najbliższy punkt?
+        return 0
     avg = lap_data['hr_data'].mean()
     if pd.isna(avg):
         return 0
     
     return int(avg)
+
+def convert_streams(streams):
+    return [{'type': 'dist_data', 'data': streams['dist_data']}, {'type': 'hr_data', 'data': streams['hr_data']}]
