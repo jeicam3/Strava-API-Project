@@ -1,0 +1,35 @@
+<div class="card-body">
+    <h5 class="card-title mb-4">Edit HR Zones</h5>
+    <form hx-post="/settings/update" hx-target="#hr-zones-container" hx-swap="innerHTML">
+        <div class="mb-3 row">
+            <label class="col-sm-4 col-form-label">Z1 Limit</label>
+            <div class="col-sm-8"><input type="number" name="z1_limit" class="form-control" value="{{ user.z1_limit or '' }}"></div>
+        </div>
+        <div class="mb-3 row">
+            <label class="col-sm-4 col-form-label">Z2 Limit</label>
+            <div class="col-sm-8"><input type="number" name="z2_limit" class="form-control" value="{{ user.z2_limit or '' }}"></div>
+        </div>
+        <div class="mb-3 row">
+            <label class="col-sm-4 col-form-label">Z3 Limit</label>
+            <div class="col-sm-8">
+                <input type="number" name="z3_limit" class="form-control" value="{{ user.hr_max or '' }}">
+            </div>
+        </div>
+        <div class="mb-3 row">
+            <label class="col-sm-4 col-form-label">Z4 Limit</label>
+            <div class="col-sm-8">
+                <input type="number" name="z4_limit" class="form-control" value="{{ user.hr_max or '' }}">
+            </div>
+        </div>
+        <div class="mb-3 row">
+            <label class="col-sm-4 col-form-label">HR Max</label>
+            <div class="col-sm-8">
+                <input type="number" name="hr_max" class="form-control" value="{{ user.hr_max or '' }}">
+            </div>
+        </div>
+        <div class="d-flex gap-2 justify-content-end">
+            <button type="button" class="btn btn-secondary" hx-get="/settings/view" hx-target="#hr-zones-container">Discard</button>
+            <button type="submit" class="btn btn-success">Save</button>
+        </div>
+    </form>
+</div>

@@ -1,0 +1,21 @@
+<div class="card-body">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="card-title mb-0">Heart Rate Zones</h5>
+        <button class="btn btn-sm btn-outline-primary" 
+                hx-get="/settings/edit" 
+                hx-target="#hr-zones-container" 
+                hx-swap="innerHTML">
+            Edit HR Zones
+        </button>
+    </div>
+    
+    <table class="table table-hover">
+        <tbody>
+            <tr><td>Z1 Limit</td><td>{{ user.z1_limit or '---' }}</td></tr>
+            <tr><td>Z2 Limit</td><td>{{ user.z2_limit or '---' }}</td></tr>
+            <tr><td>Z3 Limit</td><td>{{ user.z3_limit or '---' }}</td></tr>
+            <tr><td>Z4 Limit</td><td>{{ user.z4_limit or '---' }}</td></tr>
+            <tr><td>HR Max</td><td>{{ user.hr_max or '---' }}</td></tr>
+        </tbody>
+    </table>
+</div>

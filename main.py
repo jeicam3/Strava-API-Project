@@ -6,7 +6,7 @@ from fastapi import Form
 from fastapi import Request
 import strava_services as s
 from datetime import datetime
-from db_logic import insert_activity_data, delete, rename, change_session, get_session, add_Block, delete_block, get_block_period, get_block_object, get_access_token
+from db_logic import insert_activity_data, delete, rename, change_session, get_session, add_Block, delete_block, get_block_period, get_block_object, get_access_token, get_user_data, update_HRzones
 from data_analysis import get_calendar_blocks, get_activity_details, quick_upload_dates, generate_period_chart
 
 templates = Jinja2Templates(directory="templates")
@@ -206,3 +206,67 @@ async def get_chart_only(request: Request, block_id: int, type: str = 'distance_
     chart_html = generate_period_chart(block.start_date, block.end_date, type, request.cookies.get("athlete_id"))
     
     return chart_html
+
+@app.get('/settings', response_class=HTMLResponse)
+def show_settings_view(request: Request):
+    acc_data = get_user_data(request.cookies.get("athlete_id"))
+
+    if acc_data:
+        return templates.TemplateResponse(
+            request=request,
+            name="settings.html",
+            context={"user": acc_data}
+        )
+    else:
+        return templates.TemplateResponse(
+            request=request,
+            name="message.html",
+            context={"status": "danger", "message": "Unable to show settings screen due to an error"}
+        )
+    
+@app.get('/settings/view', response_class=HTMLResponse)
+def get_hr_view(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="partials/HRzones_view.html",
+        context={'user': get_user_data(request.cookies.get("athlete_id"))}
+    )
+
+@app.get('/settings/edit', response_class=HTMLResponse)
+def get_hr_form(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="partials/HRzones_form.html",
+        context={'user': get_user_data(request.cookies.get("athlete_id"))}
+    )
+
+@app.post('/settings/update', response_class=HTMLResponse)
+def update_zones(
+        request: Request,
+        hr_max: int = Form(...), 
+        z1_limit: int = Form(...),
+        z2_limit: int = Form(...),
+        z3_limit: int = Form(...),
+        z4_limit: int = Form(...)
+):
+    
+    update_data = {
+        'hr_max': hr_max,
+        'z1': z1_limit,
+        'z2': z2_limit,
+        'z3': z3_limit,
+        'z4': z4_limit
+    }
+
+    if(update_HRzones(request.cookies.get("athlete_id"), update_data)):
+        return templates.TemplateResponse(
+            request=request,
+            name="partials/HRzones_view.html",
+            context={'user': get_user_data(request.cookies.get("athlete_id"))}
+        )
+    else:
+        return templates.TemplateResponse(
+            request=request,
+            name="message.html",
+            context={"status": "danger", "message": "Unable to apply changes due to an error"}
+        )

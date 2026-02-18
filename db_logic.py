@@ -203,3 +203,23 @@ def get_access_token(ath_id):
         return None
     finally:
         session.close()
+
+def get_user_data(user_id):
+    with Session(engine) as session:
+        user = session.query(User).filter(User.user_id == user_id).first()
+        return user.to_dict()
+    
+def update_HRzones(user_id, update_data):
+    session = Session(engine)
+    try:
+        user = session.query(User).filter(User.user_id == user_id).first()
+        user.z1_limit = update_data['z1']
+        user.z2_limit = update_data['z2']
+        user.z3_limit = update_data['z3']
+        user.z4_limit = update_data['z4']
+        user.hr_max = update_data['hr_max']
+        session.commit()
+        return True
+    except Exception as e:
+        session.rollback()
+        return False

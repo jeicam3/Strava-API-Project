@@ -72,6 +72,9 @@ class User(Base):
     activities = relationship("Activity", back_populates="owner")
     blocks = relationship("Block", back_populates="owner")
 
+    def to_dict(self):
+        return {column.name: getattr(self, column.name) for column in self.__table__.columns}
+
 def init_db(db_url="sqlite:///strava_data.db"):
     engine = create_engine(db_url)
     Base.metadata.create_all(engine)
