@@ -2,6 +2,7 @@ from datetime import datetime
 from models import User
 import math
 import pandas as pd
+from db_logic import get_user_data
 
 def process_laps_data(laps, streams):
     result = []
@@ -30,7 +31,7 @@ def process_laps_data(laps, streams):
         result.append(result_element)
     return result
 
-def process_activity_data(activity, streams):
+def process_activity_data(activity, streams, ath_id):
     activity_id = activity['id']
     name = activity['name']
     time_int = activity['moving_time']
@@ -50,7 +51,7 @@ def process_activity_data(activity, streams):
         'pace': pace,
         'type': type,
         'date': start_date,
-        'training_load': calculate_TL(streams)
+        'training_load': calculate_TL(streams, ath_id)
     }
     return result
 
@@ -70,23 +71,32 @@ def calculate_pace(time, distance):
     else:
         return 0
     
-def calculate_TL(streams):
+def calculate_TL(streams, ath_id):
+
+    ath_data = get_user_data(ath_id)
+
+    if not (ath_data['z1_limit'] and ath_data['z2_limit'] and ath_data['z3_limit'] and ath_data['z4_limit'] and ath_data['hr_max']):
+        return 0
+    def get_multiplier(hr):
+        if hr < ath_data['z1_limit']:
+            return 1
+        elif hr < ath_data['z2_limit']:
+            return 2
+        elif hr < ath_data['z3_limit']:
+            return 3
+        elif hr < ath_data['z4_limit']:
+            return 4
+        else: return 5
+
     tl = 0
-    hr_rest = 60
-    hr_max = 205
     for i in range(1, len(streams['hr_data'])):
         delta_t = (streams['time_data'][i] - streams['time_data'][i-1]) / 60 #here we need delta time in minutes
         curr_hr = streams['hr_data'][i]
-
-        hr_ratio = (curr_hr - hr_rest) / (hr_max - hr_rest)
-        if hr_ratio > 0:
-            impulse = delta_t * hr_ratio * 0.64 * math.exp(1.92 * hr_ratio)
-            tl += impulse
+        impulse = delta_t*get_multiplier(curr_hr)
+        tl+=impulse
     return int(tl)
 
 def calculate_lap_avg_hr(streams, begin, end):
-    #df = pd.DataFrame(streams)
-
     streams = convert_streams(streams)
 
     data_dict = {}

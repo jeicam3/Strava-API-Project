@@ -72,7 +72,7 @@ def callback_func(code):
     else:
         return {"error": "Code exchange error", "details": response.json()}
     
-def get_activities(start_date, end_date, access_token):
+def get_activities(start_date, end_date, access_token, ath_id):
     after = int(datetime.strptime(start_date, "%Y-%m-%d").timestamp())
     before = int(datetime.strptime(end_date, "%Y-%m-%d").timestamp())
     headers = {
@@ -100,7 +100,7 @@ def get_activities(start_date, end_date, access_token):
                 laps_array.append(process_laps_data(laps, streams))
             else:
                 continue
-            activities_array.append(process_activity_data(activity, streams))
+            activities_array.append(process_activity_data(activity, streams, ath_id))
         return activities_array, laps_array
     else:
         return None

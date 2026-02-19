@@ -37,7 +37,7 @@ def upload_actvities(request: Request, start_date, end_date):
     if not ath_id:
         return RedirectResponse(url="/login")
     token = get_access_token(int(ath_id))
-    result = s.get_activities(start_date, end_date, token)
+    result = s.get_activities(start_date, end_date, token, request.cookies.get("athlete_id"))
 
     if result == None:
         return templates.TemplateResponse(
