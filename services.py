@@ -2,7 +2,7 @@ from datetime import datetime
 from models import User
 import math
 import pandas as pd
-from db_logic import get_user_data
+from db_logic import get_user_data, update_HRzones
 
 def process_laps_data(laps, streams):
     result = []
@@ -118,3 +118,24 @@ def calculate_lap_avg_hr(streams, begin, end):
 
 def convert_streams(streams):
     return [{'type': 'dist_data', 'data': streams['dist_data']}, {'type': 'hr_data', 'data': streams['hr_data']}]
+
+def auto_calculate_zones(max_HR, rest_HR):
+    if rest_HR:
+        HR_reserve = max_HR - rest_HR
+        z1 = int(HR_reserve*0.6) + rest_HR
+        z2 = int(HR_reserve*0.7) + rest_HR
+        z3 = int(HR_reserve*0.8) + rest_HR
+        z4 = int(HR_reserve*0.9) + rest_HR
+    else:
+        z1 = int(max_HR*0.6)
+        z2 = int(max_HR*0.7)
+        z3 = int(max_HR*0.8)
+        z4 = int(max_HR*0.9)
+
+    return {
+        'z1': z1,
+        'z2': z2,
+        'z3': z3,
+        'z4': z4,
+        'hr_max': max_HR,
+    }

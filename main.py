@@ -8,6 +8,7 @@ import strava_services as s
 from datetime import datetime
 from db_logic import insert_activity_data, delete, rename, change_session, get_session, add_Block, delete_block, get_block_period, get_block_object, get_access_token, get_user_data, update_HRzones
 from data_analysis import get_calendar_blocks, get_activity_details, quick_upload_dates, generate_period_chart
+from services import auto_calculate_zones
 
 templates = Jinja2Templates(directory="templates")
 
@@ -20,7 +21,6 @@ async def root(request: Request):
         return RedirectResponse(url="/calendar", status_code=303)
     
     return RedirectResponse(url="/login", status_code=303)
-    #return templates.TemplateResponse("login_page.html", {"request": request})
 
 @app.get("/login")
 async def login(request: Request):
@@ -70,12 +70,15 @@ def upload_actvities(request: Request, start_date, end_date):
 
 @app.get("/calendar", response_class=HTMLResponse)
 def calendar(request: Request):
-    blocks_tables = get_calendar_blocks(request.cookies.get("athlete_id"))
-    return templates.TemplateResponse(
-        request=request, 
-        name="calendar.html",
-        context={"blocks": blocks_tables}
-    )
+    if request.cookies.get("athlete_id"):
+        blocks_tables = get_calendar_blocks(request.cookies.get("athlete_id"))
+        return templates.TemplateResponse(
+            request=request, 
+            name="calendar.html",
+            context={"blocks": blocks_tables}
+        )
+    else: 
+        return RedirectResponse(url="/login", status_code=303)
 
 @app.get("/show_details", response_class=HTMLResponse)
 def get_details(request: Request, activity_id: int):
@@ -270,3 +273,9 @@ def update_zones(
             name="message.html",
             context={"status": "danger", "message": "Unable to apply changes due to an error"}
         )
+    
+@app.post('/autozones', response_class=HTMLResponse)
+def set_autozones(request: Request, max_HR: int = Form(...), rest_HR: int = Form(...)):
+    new_hr_data = auto_calculate_zones(max_HR, rest_HR)
+    update_HRzones(request.cookies.get("athlete_id"), new_hr_data)
+    return RedirectResponse(url=f"/settings", status_code=303)

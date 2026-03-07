@@ -7,6 +7,9 @@
                 hx-swap="innerHTML">
             Edit HR Zones
         </button>
+        <button href="/auto_zones" class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#autozones">
+            Auto-calculate zones
+        </button>
     </div>
     
     <table class="table table-hover">
@@ -18,4 +21,29 @@
             <tr><td>HR Max</td><td>{{ user.hr_max or '---' }}</td></tr>
         </tbody>
     </table>
+</div>
+
+<div class="modal fade" id="autozones" tabindex="-1" aria-labelledby="autozonesLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="autozones">Auto-Calculate Zones</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="/autozones" method="post">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="maxHR" class="form-label">Max Heart Rate:</label>
+                        <input type="number" class="form-control" id="maxHR" name="max_HR" required>
+                        <label for="rHR" class="form-label">Rest Heart Rate:</label>
+                        <input type="number" class="form-control" id="rHR" name="rest_HR" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Calculate</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
